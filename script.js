@@ -199,26 +199,18 @@ function setupMouseControls() {
  * ========================================================== */
 
 function setupTouchControls() {
-
     window.addEventListener("touchstart", e => {
-
         cameraState.dragging = true;
-
         cameraState.lastX =
             e.touches[0].clientX;
-
         cameraState.lastY =
             e.touches[0].clientY;
     });
-
     window.addEventListener("touchend", () => {
         cameraState.dragging = false;
     });
-
     window.addEventListener("touchmove", e => {
-
         if (!cameraState.dragging) return;
-
         updateView(
             e.touches[0].clientX,
             e.touches[0].clientY
@@ -227,13 +219,10 @@ function setupTouchControls() {
 }
 
 function updateView(x, y) {
-
     const dx = x - cameraState.lastX;
     const dy = y - cameraState.lastY;
-
     cameraState.yaw -= dx * 0.005;
     cameraState.pitch -= dy * 0.005;
-
     cameraState.pitch = Math.max(
         -Math.PI / 2,
         Math.min(
@@ -241,7 +230,6 @@ function updateView(x, y) {
             cameraState.pitch
         )
     );
-
     cameraState.lastX = x;
     cameraState.lastY = y;
 }
@@ -352,28 +340,16 @@ function updateMovement() {
                 new THREE.Vector3(0, 1, 0)
             )
             .normalize();
-    if (
-        pressedKeys.w ||
-        movementState.forward
-    ) {
+    if ( pressedKeys.w || movementState.forward) {
         movePlayer(forward, speed);
     }
-    if (
-        pressedKeys.s ||
-        movementState.backward
-    ) {
+    if ( pressedKeys.s || movementState.backward) {
         movePlayer(forward, -speed);
     }
-    if (
-        pressedKeys.a ||
-        movementState.left
-    ) {
+    if (pressedKeys.d ||movementState.left) {
         movePlayer(right, speed);
     }
-    if (
-        pressedKeys.d ||
-        movementState.right
-    ) {
+    if (pressedKeys.a ||movementState.right) {
         movePlayer(right, -speed);
     }
 }
