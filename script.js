@@ -89,19 +89,14 @@ function createRenderer() {
 }
 
 function createPlayer() {
-
     const player = new THREE.Object3D();
-
     player.position.set(
         0,
         1.6,
         5
     );
-
     player.add(camera);
-
     scene.add(player);
-
     return player;
 }
 
@@ -110,32 +105,26 @@ function createPlayer() {
  * ========================================================== */
 
 function createLighting() {
-
     const light = new THREE.DirectionalLight(
         0xffffff,
         3
     );
-
     light.position.set(
         10,
         10,
         10
     );
-
     scene.add(light);
 }
 
 function createFloor() {
-
     const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(100, 100),
         new THREE.MeshStandardMaterial({
             color: 0x44aa44
         })
     );
-
     floor.rotation.x = -Math.PI / 2;
-
     scene.add(floor);
 }
 
@@ -152,13 +141,11 @@ function createObstacles(count) {
                 color: Math.random() * 0xffffff
             })
         );
-
         obstacle.position.set(
             (Math.random() - 0.5) * 50,
             0.5,
             (Math.random() - 0.5) * 50
         );
-
         scene.add(obstacle);
     }
 }
@@ -168,11 +155,9 @@ function createObstacles(count) {
  * ========================================================== */
 
 function setupKeyboardControls() {
-
     window.addEventListener("keydown", e => {
         pressedKeys[e.key.toLowerCase()] = true;
     });
-
     window.addEventListener("keyup", e => {
         pressedKeys[e.key.toLowerCase()] = false;
     });
@@ -285,25 +270,18 @@ function setupMobileButtons() {
 }
 
 function bindMovementButton(id, setter) {
-
     const button =
         document.getElementById(id);
-
-    ["mousedown", "touchstart"]
-        .forEach(event =>
-            button.addEventListener(
-                event,
-                () => setter(true)
-            )
-        );
-
-    ["mouseup", "touchend"]
-        .forEach(event =>
-            button.addEventListener(
-                event,
-                () => setter(false)
-            )
-        );
+    const start = () => setter(true);
+    const stop = () => setter(false);
+    button.addEventListener("mousedown", start);
+    button.addEventListener("touchstart", start);
+    button.addEventListener("mouseup", stop);
+    button.addEventListener("mouseleave", stop);
+    button.addEventListener("touchend", stop);
+    button.addEventListener("touchcancel", stop);
+    document.addEventListener("mouseup", stop);
+    document.addEventListener("touchend", stop);
 }
 
 /* ==========================================================
@@ -316,36 +294,26 @@ function bindMovementButton(id, setter) {
  * mediante el movimiento físico del teléfono.
  */
 function setupGyroscope() {
-
     const button =
         document.getElementById("gyroBtn");
-
     if (!button) return;
-
     button.onclick = async () => {
-
         try {
-
             if (
                 typeof DeviceOrientationEvent !== "undefined" &&
                 typeof DeviceOrientationEvent.requestPermission === "function"
             ) {
-
                 const permission =
                     await DeviceOrientationEvent
                         .requestPermission();
-
                 if (permission !== "granted") {
                     return;
                 }
             }
-
             window.addEventListener(
                 "deviceorientation",
                 event => {
-
                     if (event.alpha != null) {
-
                         cameraState.yaw =
                             THREE.MathUtils.degToRad(
                                 event.alpha
@@ -353,13 +321,9 @@ function setupGyroscope() {
                     }
                 }
             );
-
             button.style.display = "none";
-
         } catch (error) {
-
             console.error(error);
-
         }
     };
 }
@@ -373,19 +337,14 @@ function setupGyroscope() {
  * de las entradas activas.
  */
 function updateMovement() {
-
     const speed = 0.1;
-
     const forward =
         new THREE.Vector3();
-
     camera.getWorldDirection(
         forward
     );
-
     forward.y = 0;
     forward.normalize();
-
     const right =
         new THREE.Vector3()
             .crossVectors(
@@ -393,28 +352,24 @@ function updateMovement() {
                 new THREE.Vector3(0, 1, 0)
             )
             .normalize();
-
     if (
         pressedKeys.w ||
         movementState.forward
     ) {
         movePlayer(forward, speed);
     }
-
     if (
         pressedKeys.s ||
         movementState.backward
     ) {
         movePlayer(forward, -speed);
     }
-
     if (
         pressedKeys.a ||
         movementState.left
     ) {
         movePlayer(right, speed);
     }
-
     if (
         pressedKeys.d ||
         movementState.right
@@ -424,7 +379,6 @@ function updateMovement() {
 }
 
 function movePlayer(direction, speed) {
-
     player.position.add(
         direction.clone()
             .multiplyScalar(speed)
@@ -436,12 +390,9 @@ function movePlayer(direction, speed) {
  * ========================================================== */
 
 function updateCameraRotation() {
-
     camera.rotation.order = "YXZ";
-
     camera.rotation.y =
         cameraState.yaw;
-
     camera.rotation.x =
         cameraState.pitch;
 }
@@ -456,23 +407,18 @@ function animate() {
     );
     updateMovement();
     updateCameraRotation();
-
     renderer.render(
         scene,
         camera
     );
 }
-
 window.addEventListener(
     "resize",
     () => {
-
         camera.aspect =
             window.innerWidth /
             window.innerHeight;
-
         camera.updateProjectionMatrix();
-
         renderer.setSize(
             window.innerWidth,
             window.innerHeight
