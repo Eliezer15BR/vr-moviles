@@ -71,20 +71,11 @@ function createCamera() {
 }
 
 function createRenderer() {
-
     const renderer = new THREE.WebGLRenderer({
         antialias: true
     });
-
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-
-    document.body.appendChild(
-        renderer.domElement
-    );
-
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    document.body.appendChild(renderer.domElement);
     return renderer;
 }
 
@@ -116,7 +107,6 @@ function createLighting() {
     );
     scene.add(light);
 }
-
 function createFloor() {
     const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(100, 100),
@@ -172,21 +162,16 @@ function setupKeyboardControls() {
  * de la cámara mediante arrastre.
  */
 function setupMouseControls() {
-
     window.addEventListener("mousedown", e => {
         cameraState.dragging = true;
         cameraState.lastX = e.clientX;
         cameraState.lastY = e.clientY;
     });
-
     window.addEventListener("mouseup", () => {
         cameraState.dragging = false;
     });
-
     window.addEventListener("mousemove", e => {
-
         if (!cameraState.dragging) return;
-
         updateView(
             e.clientX,
             e.clientY
@@ -353,18 +338,15 @@ function updateMovement() {
         movePlayer(right, -speed);
     }
 }
-
 function movePlayer(direction, speed) {
     player.position.add(
         direction.clone()
             .multiplyScalar(speed)
     );
 }
-
 /* ==========================================================
  * CÁMARA
  * ========================================================== */
-
 function updateCameraRotation() {
     camera.rotation.order = "YXZ";
     camera.rotation.y =
