@@ -220,12 +220,12 @@ bindButton(
 );
 
 bindButton(
-    "left",
+    "right",
     v=>mobileLeft=v
 );
 
 bindButton(
-    "right",
+    "left",
     v=>mobileRight=v
 );
 
