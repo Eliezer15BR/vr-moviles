@@ -1,360 +1,461 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+/* ==========================================================
+ * CONFIGURACIÓN GENERAL
+ * ========================================================== */
 
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth/window.innerHeight,
-    0.1,
-    1000
-);
+const cameraState = {
+    yaw: 0,
+    pitch: 0,
+    dragging: false,
+    lastX: 0,
+    lastY: 0
+};
 
-const renderer = new THREE.WebGLRenderer({
-    antialias:true
-});
+const movementState = {
+    forward: false,
+    backward: false,
+    left: false,
+    right: false
+};
 
-renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-);
+const pressedKeys = {};
 
-document.body.appendChild(
-    renderer.domElement
-);
+/* ==========================================================
+ * ESCENA
+ * ========================================================== */
 
-// -------------------
-// Jugador
-// -------------------
+const scene = createScene();
+const camera = createCamera();
+const renderer = createRenderer();
 
-const player = new THREE.Object3D();
+const player = createPlayer();
 
-player.position.set(0,1.6,5);
+createLighting();
+createFloor();
+createObstacles(40);
 
-player.add(camera);
+/* ==========================================================
+ * CONTROLES
+ * ========================================================== */
 
-scene.add(player);
+setupKeyboardControls();
+setupMouseControls();
+setupTouchControls();
+setupMobileButtons();
+setupGyroscope();
 
-// -------------------
-// Luz
-// -------------------
+/* ==========================================================
+ * CICLO PRINCIPAL
+ * ========================================================== */
 
-const light = new THREE.DirectionalLight(
-    0xffffff,
-    3
-);
+animate();
 
-light.position.set(10,10,10);
+/* ==========================================================
+ * CREACIÓN DE ESCENA
+ * ========================================================== */
 
-scene.add(light);
+function createScene() {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    return scene;
+}
 
-// -------------------
-// Piso
-// -------------------
+function createCamera() {
+    return new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+}
 
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(100,100),
-    new THREE.MeshStandardMaterial({
-        color:0x44aa44
-    })
-);
+function createRenderer() {
 
-floor.rotation.x = -Math.PI/2;
+    const renderer = new THREE.WebGLRenderer({
+        antialias: true
+    });
 
-scene.add(floor);
+    renderer.setSize(
+        window.innerWidth,
+        window.innerHeight
+    );
 
-// -------------------
-// Cubos
-// -------------------
+    document.body.appendChild(
+        renderer.domElement
+    );
 
-for(let i=0;i<40;i++){
+    return renderer;
+}
 
-    const cube = new THREE.Mesh(
-        new THREE.BoxGeometry(),
+function createPlayer() {
+
+    const player = new THREE.Object3D();
+
+    player.position.set(
+        0,
+        1.6,
+        5
+    );
+
+    player.add(camera);
+
+    scene.add(player);
+
+    return player;
+}
+
+/* ==========================================================
+ * ENTORNO
+ * ========================================================== */
+
+function createLighting() {
+
+    const light = new THREE.DirectionalLight(
+        0xffffff,
+        3
+    );
+
+    light.position.set(
+        10,
+        10,
+        10
+    );
+
+    scene.add(light);
+}
+
+function createFloor() {
+
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(100, 100),
         new THREE.MeshStandardMaterial({
-            color:Math.random()*0xffffff
+            color: 0x44aa44
         })
     );
 
-    cube.position.set(
-        (Math.random()-0.5)*50,
-        0.5,
-        (Math.random()-0.5)*50
-    );
+    floor.rotation.x = -Math.PI / 2;
 
-    scene.add(cube);
+    scene.add(floor);
 }
 
-// -------------------
-// Mirar
-// -------------------
-
-let yaw = 0;
-let pitch = 0;
-
-let dragging = false;
-let lastX = 0;
-let lastY = 0;
-
-window.addEventListener("mousedown",(e)=>{
-    dragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
-});
-
-window.addEventListener("mouseup",()=>{
-    dragging = false;
-});
-
-window.addEventListener("mousemove",(e)=>{
-
-    if(!dragging) return;
-
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
-
-    yaw -= dx * 0.005;
-    pitch -= dy * 0.005;
-
-    pitch = Math.max(
-        -Math.PI/2,
-        Math.min(Math.PI/2,pitch)
-    );
-
-    lastX = e.clientX;
-    lastY = e.clientY;
-});
-
-// Touch
-
-window.addEventListener("touchstart",(e)=>{
-    dragging = true;
-    lastX = e.touches[0].clientX;
-    lastY = e.touches[0].clientY;
-});
-
-window.addEventListener("touchend",()=>{
-    dragging = false;
-});
-
-window.addEventListener("touchmove",(e)=>{
-
-    if(!dragging) return;
-
-    const dx =
-        e.touches[0].clientX - lastX;
-
-    const dy =
-        e.touches[0].clientY - lastY;
-
-    yaw -= dx * 0.005;
-    pitch -= dy * 0.005;
-
-    pitch = Math.max(
-        -Math.PI/2,
-        Math.min(Math.PI/2,pitch)
-    );
-
-    lastX = e.touches[0].clientX;
-    lastY = e.touches[0].clientY;
-});
-
-// -------------------
-// Teclado
-// -------------------
-
-const keys = {};
-
-window.addEventListener(
-    "keydown",
-    e => keys[e.key.toLowerCase()] = true
-);
-
-window.addEventListener(
-    "keyup",
-    e => keys[e.key.toLowerCase()] = false
-);
-
-// -------------------
-// Botones móvil
-// -------------------
-
-let mobileForward=false;
-let mobileBackward=false;
-let mobileLeft=false;
-let mobileRight=false;
-
-function bindButton(id,setter){
-
-    const btn=document.getElementById(id);
-
-    btn.addEventListener(
-        "touchstart",
-        ()=>setter(true)
-    );
-
-    btn.addEventListener(
-        "touchend",
-        ()=>setter(false)
-    );
-
-    btn.addEventListener(
-        "mousedown",
-        ()=>setter(true)
-    );
-
-    btn.addEventListener(
-        "mouseup",
-        ()=>setter(false)
-    );
-}
-
-bindButton(
-    "forward",
-    v=>mobileForward=v
-);
-
-bindButton(
-    "backward",
-    v=>mobileBackward=v
-);
-
-bindButton(
-    "right",
-    v=>mobileLeft=v
-);
-
-bindButton(
-    "left",
-    v=>mobileRight=v
-);
-
-// -------------------
-// Giroscopio
-// -------------------
-
-document
-.getElementById("gyroBtn")
-.onclick = async ()=>{
-
-    try{
-
-        if(
-            typeof DeviceOrientationEvent !==
-            "undefined"
-            &&
-            typeof DeviceOrientationEvent
-            .requestPermission ===
-            "function"
-        ){
-
-            const permission =
-            await DeviceOrientationEvent
-            .requestPermission();
-
-            if(permission!=="granted")
-                return;
-        }
-
-        window.addEventListener(
-            "deviceorientation",
-            event=>{
-
-                if(event.alpha!=null){
-
-                    yaw =
-                    THREE.MathUtils
-                    .degToRad(event.alpha);
-
-                }
-
-            }
+/*
+ * Genera objetos distribuidos aleatoriamente
+ * para proporcionar referencias visuales
+ * dentro de la escena.
+ */
+function createObstacles(count) {
+    for (let i = 0; i < count; i++) {
+        const obstacle = new THREE.Mesh(
+            new THREE.BoxGeometry(),
+            new THREE.MeshStandardMaterial({
+                color: Math.random() * 0xffffff
+            })
         );
 
-        document
-        .getElementById("gyroBtn")
-        .style.display="none";
+        obstacle.position.set(
+            (Math.random() - 0.5) * 50,
+            0.5,
+            (Math.random() - 0.5) * 50
+        );
 
-    }catch(err){
-
-        console.log(err);
-
+        scene.add(obstacle);
     }
+}
 
-};
+/* ==========================================================
+ * CONTROLES DE TECLADO
+ * ========================================================== */
 
-// -------------------
-// Movimiento
-// -------------------
+function setupKeyboardControls() {
 
-function updateMovement(){
+    window.addEventListener("keydown", e => {
+        pressedKeys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener("keyup", e => {
+        pressedKeys[e.key.toLowerCase()] = false;
+    });
+}
+
+/* ==========================================================
+ * CONTROLES DE RATÓN
+ * ========================================================== */
+
+/*
+ * Permite modificar la orientación
+ * de la cámara mediante arrastre.
+ */
+function setupMouseControls() {
+
+    window.addEventListener("mousedown", e => {
+        cameraState.dragging = true;
+        cameraState.lastX = e.clientX;
+        cameraState.lastY = e.clientY;
+    });
+
+    window.addEventListener("mouseup", () => {
+        cameraState.dragging = false;
+    });
+
+    window.addEventListener("mousemove", e => {
+
+        if (!cameraState.dragging) return;
+
+        updateView(
+            e.clientX,
+            e.clientY
+        );
+    });
+}
+
+/* ==========================================================
+ * CONTROLES TÁCTILES
+ * ========================================================== */
+
+function setupTouchControls() {
+
+    window.addEventListener("touchstart", e => {
+
+        cameraState.dragging = true;
+
+        cameraState.lastX =
+            e.touches[0].clientX;
+
+        cameraState.lastY =
+            e.touches[0].clientY;
+    });
+
+    window.addEventListener("touchend", () => {
+        cameraState.dragging = false;
+    });
+
+    window.addEventListener("touchmove", e => {
+
+        if (!cameraState.dragging) return;
+
+        updateView(
+            e.touches[0].clientX,
+            e.touches[0].clientY
+        );
+    });
+}
+
+function updateView(x, y) {
+
+    const dx = x - cameraState.lastX;
+    const dy = y - cameraState.lastY;
+
+    cameraState.yaw -= dx * 0.005;
+    cameraState.pitch -= dy * 0.005;
+
+    cameraState.pitch = Math.max(
+        -Math.PI / 2,
+        Math.min(
+            Math.PI / 2,
+            cameraState.pitch
+        )
+    );
+
+    cameraState.lastX = x;
+    cameraState.lastY = y;
+}
+
+/* ==========================================================
+ * BOTONES MÓVILES
+ * ========================================================== */
+
+function setupMobileButtons() {
+    bindMovementButton(
+        "forward",
+        value => movementState.forward = value
+    );
+    bindMovementButton(
+        "backward",
+        value => movementState.backward = value
+    );
+    bindMovementButton(
+        "right",
+        value => movementState.left = value
+    );
+    bindMovementButton(
+        "left",
+        value => movementState.right = value
+    );
+}
+
+function bindMovementButton(id, setter) {
+
+    const button =
+        document.getElementById(id);
+
+    ["mousedown", "touchstart"]
+        .forEach(event =>
+            button.addEventListener(
+                event,
+                () => setter(true)
+            )
+        );
+
+    ["mouseup", "touchend"]
+        .forEach(event =>
+            button.addEventListener(
+                event,
+                () => setter(false)
+            )
+        );
+}
+
+/* ==========================================================
+ * GIROSCOPIO
+ * ========================================================== */
+
+/*
+ * Si el dispositivo dispone de sensores de
+ * orientación, permite controlar la cámara
+ * mediante el movimiento físico del teléfono.
+ */
+function setupGyroscope() {
+
+    const button =
+        document.getElementById("gyroBtn");
+
+    if (!button) return;
+
+    button.onclick = async () => {
+
+        try {
+
+            if (
+                typeof DeviceOrientationEvent !== "undefined" &&
+                typeof DeviceOrientationEvent.requestPermission === "function"
+            ) {
+
+                const permission =
+                    await DeviceOrientationEvent
+                        .requestPermission();
+
+                if (permission !== "granted") {
+                    return;
+                }
+            }
+
+            window.addEventListener(
+                "deviceorientation",
+                event => {
+
+                    if (event.alpha != null) {
+
+                        cameraState.yaw =
+                            THREE.MathUtils.degToRad(
+                                event.alpha
+                            );
+                    }
+                }
+            );
+
+            button.style.display = "none";
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+    };
+}
+
+/* ==========================================================
+ * MOVIMIENTO
+ * ========================================================== */
+
+/*
+ * Actualiza la posición del jugador a partir
+ * de las entradas activas.
+ */
+function updateMovement() {
 
     const speed = 0.1;
 
-    const dir =
-    new THREE.Vector3();
+    const forward =
+        new THREE.Vector3();
 
-    camera.getWorldDirection(dir);
+    camera.getWorldDirection(
+        forward
+    );
 
-    dir.y = 0;
-    dir.normalize();
+    forward.y = 0;
+    forward.normalize();
 
     const right =
-    new THREE.Vector3()
-    .crossVectors(
-        dir,
-        new THREE.Vector3(0,1,0)
-    )
-    .normalize();
+        new THREE.Vector3()
+            .crossVectors(
+                forward,
+                new THREE.Vector3(0, 1, 0)
+            )
+            .normalize();
 
-    if(keys["w"] || mobileForward){
-
-        player.position.add(
-            dir.clone().multiplyScalar(speed)
-        );
-
+    if (
+        pressedKeys.w ||
+        movementState.forward
+    ) {
+        movePlayer(forward, speed);
     }
 
-    if(keys["s"] || mobileBackward){
-
-        player.position.add(
-            dir.clone().multiplyScalar(-speed)
-        );
-
+    if (
+        pressedKeys.s ||
+        movementState.backward
+    ) {
+        movePlayer(forward, -speed);
     }
 
-    if(keys["a"] || mobileLeft){
-
-        player.position.add(
-            right.clone().multiplyScalar(speed)
-        );
-
+    if (
+        pressedKeys.a ||
+        movementState.left
+    ) {
+        movePlayer(right, speed);
     }
 
-    if(keys["d"] || mobileRight){
-
-        player.position.add(
-            right.clone().multiplyScalar(-speed)
-        );
-
+    if (
+        pressedKeys.d ||
+        movementState.right
+    ) {
+        movePlayer(right, -speed);
     }
-
 }
 
-// -------------------
-// Render
-// -------------------
+function movePlayer(direction, speed) {
 
-function animate(){
+    player.position.add(
+        direction.clone()
+            .multiplyScalar(speed)
+    );
+}
 
-    requestAnimationFrame(animate);
+/* ==========================================================
+ * CÁMARA
+ * ========================================================== */
 
+function updateCameraRotation() {
+
+    camera.rotation.order = "YXZ";
+
+    camera.rotation.y =
+        cameraState.yaw;
+
+    camera.rotation.x =
+        cameraState.pitch;
+}
+
+/* ==========================================================
+ * RENDERIZADO
+ * ========================================================== */
+
+function animate() {
+    requestAnimationFrame(
+        animate
+    );
     updateMovement();
-
-    camera.rotation.order="YXZ";
-
-    camera.rotation.y = yaw;
-    camera.rotation.x = pitch;
+    updateCameraRotation();
 
     renderer.render(
         scene,
@@ -362,15 +463,13 @@ function animate(){
     );
 }
 
-animate();
-
 window.addEventListener(
     "resize",
-    ()=>{
+    () => {
 
-        camera.aspect=
-        window.innerWidth/
-        window.innerHeight;
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
 
         camera.updateProjectionMatrix();
 
@@ -378,6 +477,5 @@ window.addEventListener(
             window.innerWidth,
             window.innerHeight
         );
-
     }
 );
