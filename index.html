@@ -3,176 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Mini VR</title>
-
-<style>
-body{
-    margin:0;
-    overflow:hidden;
-}
-
-#btn{
-    position:absolute;
-    top:20px;
-    left:20px;
-    z-index:100;
-    padding:10px;
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<button id="btn">Activar Giroscopio</button>
+<button id="gyroBtn">Activar Giroscopio</button>
 
-<script type="module">
+<div id="controls">
+    <div class="pad">
+        <div></div>
+        <button id="forward">↑</button>
+        <div></div>
 
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js';
+        <button id="left">←</button>
+        <div></div>
+        <button id="right">→</button>
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+        <div></div>
+        <button id="backward">↓</button>
+        <div></div>
+    </div>
+</div>
 
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth/window.innerHeight,
-    0.1,
-    1000
-);
+<script type="module" src="./script.js"></script>
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-camera.position.set(0,1.6,5);
-
-// luz
-const light = new THREE.DirectionalLight(0xffffff,3);
-light.position.set(5,10,5);
-scene.add(light);
-
-// piso
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50,50),
-    new THREE.MeshStandardMaterial({color:0x44aa44})
-);
-
-floor.rotation.x = -Math.PI/2;
-scene.add(floor);
-
-// cubos
-for(let i=0;i<15;i++){
-
-    const cube = new THREE.Mesh(
-        new THREE.BoxGeometry(),
-        new THREE.MeshStandardMaterial({
-            color:Math.random()*0xffffff
-        })
-    );
-
-    cube.position.set(
-        (Math.random()-0.5)*20,
-        0.5,
-        (Math.random()-0.5)*20
-    );
-
-    scene.add(cube);
-}
-
-// ----- CONTROL TÁCTIL -----
-
-let dragging=false;
-let yaw=0;
-let pitch=0;
-
-window.addEventListener("touchstart",()=>{
-    dragging=true;
-});
-
-window.addEventListener("touchend",()=>{
-    dragging=false;
-});
-
-window.addEventListener("touchmove",(e)=>{
-
-    if(!dragging)return;
-
-    yaw -= e.touches[0].movementX || 0.01;
-});
-
-// ----- GIROSCOPIO -----
-
-const btn=document.getElementById("btn");
-
-btn.onclick=async()=>{
-
-    try{
-
-        if(
-            typeof DeviceOrientationEvent !== "undefined" &&
-            typeof DeviceOrientationEvent.requestPermission==="function"
-        ){
-            const permission=
-                await DeviceOrientationEvent.requestPermission();
-
-            if(permission!=="granted") return;
-        }
-
-        window.addEventListener(
-            "deviceorientation",
-            (event)=>{
-
-                if(event.alpha!=null){
-
-                    yaw = THREE.MathUtils.degToRad(event.alpha);
-
-                }
-
-                if(event.beta!=null){
-
-                    pitch = THREE.MathUtils.degToRad(
-                        event.beta-90
-                    );
-
-                }
-
-            }
-        );
-
-        btn.remove();
-
-    }catch(err){
-        console.error(err);
-    }
-};
-
-// render
-function animate(){
-
-    requestAnimationFrame(animate);
-
-    camera.rotation.order="YXZ";
-
-    camera.rotation.y = -yaw;
-    camera.rotation.x = pitch*0.5;
-
-    renderer.render(scene,camera);
-}
-
-animate();
-
-window.addEventListener("resize",()=>{
-
-    camera.aspect=
-        window.innerWidth/window.innerHeight;
-
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(
-        window.innerWidth,
-        window.innerHeight
-    );
-
-});
-
-</script>
 </body>
 </html>
